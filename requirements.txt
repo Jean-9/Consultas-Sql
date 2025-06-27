@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+jinja2
+sqlalchemy
+pandas
+openpyxl
+pyodbc
+pip install python-multipart
