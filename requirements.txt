@@ -5,4 +5,7 @@ sqlalchemy
 pandas
 openpyxl
 pyodbc
-pip install python-multipart
+python-multipart
+python-dotenv
+streamlit
+psycopg2-binary

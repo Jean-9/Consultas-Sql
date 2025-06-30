@@ -2,25 +2,35 @@ from io import BytesIO
 import pandas as pd
 import streamlit as st
 from sqlalchemy import create_engine, text
-from credentials import host, port, username, password, database, host_postgres, port_postgres, username_postgres, password_postgres, database_postgres
+from dotenv import load_dotenv
 from sqlalchemy.engine.url import URL
+import os
+
+# Carrega variáveis do arquivo .env
+load_dotenv()
 
 # Conexão
 # Postgres
 engine_postgres = create_engine(
     URL.create(
         drivername="postgresql+psycopg2",
-        username=username_postgres,
-        password=password_postgres,
-        host=host_postgres,
-        port=port_postgres,
-        database=database_postgres,
+        username=os.getenv("username_postgres"),
+        password=os.getenv("password_postgres"),
+        host=os.getenv("host_postgres"),
+        port=os.getenv("port_postgres"),
+        database=os.getenv("database_postgres"),
         query={"sslmode": "disable"}
     )
 )
 
 # Protheus
-connection_string = f"DRIVER=ODBC Driver 17 for SQL Server;SERVER={host},{port};DATABASE={database};UID={username};PWD={password}"
+connection_string = (
+    f"DRIVER=ODBC Driver 17 for SQL Server;"
+    f"SERVER={os.getenv('host')},{os.getenv('port')};"
+    f"DATABASE={os.getenv('database')};"
+    f"UID={os.getenv('username')};"
+    f"PWD={os.getenv('password')}"
+)
 engine_protheus = create_engine(URL.create("mssql+pyodbc", query={"odbc_connect": connection_string}))
 
 def rerun():

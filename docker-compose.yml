@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  meu_app:
+    build: .
+    container_name: meu_app
+    ports:
+      - "8501:8501"
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    volumes:
+      - ./data:/app/data
+    command: streamlit run app2.py --server.port=8501 --server.address=0.0.0.0

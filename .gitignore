@@ -1,0 +1,15 @@
+# Ambientes virtuais
+venv/
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+logs/
+
+# Configurações locais
+.env
+
+# Editor
+.vscode/
+.idea/
