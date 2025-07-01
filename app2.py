@@ -1,3 +1,9 @@
+"""
+App Streamlit para gerenciar, salvar e executar consultas SQL personalizadas.
+- As consultas são armazenadas no PostgreSQL.
+- A execução das consultas ocorre no banco Protheus (SQL Server).
+"""
+
 from io import BytesIO
 import pandas as pd
 import streamlit as st
@@ -6,11 +12,17 @@ from dotenv import load_dotenv
 from sqlalchemy.engine.url import URL
 import os
 
-# Carrega variáveis do arquivo .env
+# -------------------------
+# Carregamento de variáveis de ambiente
+# -------------------------
+
 load_dotenv()
 
-# Conexão
-# Postgres
+# -------------------------
+# Conexões com os bancos de dados
+# -------------------------
+
+# Conexão com o banco PostgreSQL (onde as consultas são salvas)
 engine_postgres = create_engine(
     URL.create(
         drivername="postgresql+psycopg2",
@@ -23,7 +35,7 @@ engine_postgres = create_engine(
     )
 )
 
-# Protheus
+# Conexão com o banco Protheus (onde as consultas são executadas)
 connection_string = (
     f"DRIVER=ODBC Driver 17 for SQL Server;"
     f"SERVER={os.getenv('host')},{os.getenv('port')};"
@@ -33,46 +45,59 @@ connection_string = (
 )
 engine_protheus = create_engine(URL.create("mssql+pyodbc", query={"odbc_connect": connection_string}))
 
+# -------------------------
+# Utilitário para forçar recarregamento no Streamlit
+# -------------------------
+
 def rerun():
     import streamlit.runtime.scriptrunner.script_runner as script_runner
     from streamlit.runtime.scriptrunner import RerunException
     raise RerunException(script_runner.RerunData())
 
+# -------------------------
+# Funções CRUD para consultas salvas
+# -------------------------
 
-# Funções CRUD básicas
 def listar_consultas():
+    """Retorna todas as consultas salvas do banco PostgreSQL."""
     with engine_postgres.connect() as conn:
         result = conn.execute(text("SELECT id, nome, descricao, criado_em FROM consultas_salvas ORDER BY criado_em DESC"))
         df = pd.DataFrame(result.fetchall(), columns=result.keys())
     return df
 
 def salvar_consulta(nome, descricao, consulta_sql):
+    """Salva uma nova consulta no banco PostgreSQL."""
     with engine_postgres.begin() as conn:
         conn.execute(text("""
             INSERT INTO consultas_salvas (nome, descricao, consulta) VALUES (:nome, :descricao, :consulta)
         """), {"nome": nome, "descricao": descricao, "consulta": consulta_sql})
 
 def carregar_consulta(id):
+    """Carrega o conteúdo SQL de uma consulta salva a partir do ID."""
     with engine_postgres.connect() as conn:
         result = conn.execute(text("SELECT consulta FROM consultas_salvas WHERE id = :id"), {"id": id}).fetchone()
     return result[0] if result else ""
 
 def deletar_consulta(id):
+    """Deleta uma consulta salva com base no ID."""
     with engine_postgres.connect() as conn:
         conn.execute(text("DELETE FROM consultas_salvas WHERE id = :id"), {"id": id})
 
-# UI Streamlit
+# -------------------------
+# Interface do Streamlit
+# -------------------------
+
 st.title("Gerenciador de Consultas SQL")
 
-# Listar consultas salvas
+# Exibir consultas salvas
 df_consultas = listar_consultas()
-
 if not df_consultas.empty:
-    id_selecionado = st.selectbox("Consultas salvas:", options=df_consultas["id"], format_func=lambda x: df_consultas[df_consultas["id"] == x]["nome"].values[0])
+    id_selecionado = st.selectbox("Consultas salvas:", options=df_consultas["id"],
+                                  format_func=lambda x: df_consultas[df_consultas["id"] == x]["nome"].values[0])
 else:
     id_selecionado = None
 
-# Botões para carregar ou deletar
+# Botões de ação: carregar ou deletar consulta
 col1, col2 = st.columns(2)
 with col1:
     if st.button("Carregar Consulta") and id_selecionado:
@@ -83,26 +108,29 @@ with col2:
         deletar_consulta(id_selecionado)
         rerun()
 
-# Caixa para editar/inserir a consulta
-consulta_atual = st.text_area("Consulta SQL", value=st.session_state.get("consulta", ""), height=200)
+# Formulário para salvar nova consulta
+consulta_sql = st.text_area("Consulta SQL", value=st.session_state.get("consulta", ""), height=200)
 nome = st.text_input("Nome da consulta")
 descricao = st.text_area("Descrição")
 
 if st.button("Salvar Consulta"):
     if nome.strip() == "":
         st.error("Por favor, insira um nome para a consulta.")
-    elif consulta_atual.strip() == "":
+    elif consulta_sql.strip() == "":
         st.error("Consulta SQL não pode ser vazia.")
     else:
-        salvar_consulta(nome, descricao, consulta_atual)
+        salvar_consulta(nome, descricao, consulta_sql)
         st.success("Consulta salva com sucesso!")
         rerun()
 
-# Botão para executar a consulta diretamente
+# -------------------------
+# Execução da consulta no banco Protheus
+# -------------------------
+
 if st.button("Executar Consulta"):
     try:
         with engine_protheus.connect() as conn2:
-            df_result = pd.read_sql(text(consulta_atual), conn2)
+            df_result = pd.read_sql(text(consulta_sql), conn2)
         st.dataframe(df_result, use_container_width=True)
     except Exception as e:
         st.error(f"Erro na execução: {e}")
