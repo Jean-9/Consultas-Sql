@@ -74,13 +74,13 @@ def salvar_consulta(nome, descricao, consulta_sql):
 
 def carregar_consulta(id):
     """Carrega o conteúdo SQL de uma consulta salva a partir do ID."""
-    with engine_postgres.connect() as conn:
+    with engine_postgres.begin() as conn:
         result = conn.execute(text("SELECT consulta FROM consultas_salvas WHERE id = :id"), {"id": id}).fetchone()
     return result[0] if result else ""
 
 def deletar_consulta(id):
     """Deleta uma consulta salva com base no ID."""
-    with engine_postgres.connect() as conn:
+    with engine_postgres.begin() as conn:
         conn.execute(text("DELETE FROM consultas_salvas WHERE id = :id"), {"id": id})
 
 # -------------------------
@@ -129,6 +129,15 @@ if st.button("Salvar Consulta"):
 
 if st.button("Executar Consulta"):
     try:
+        # Verifica se a consulta começa com SELECT (case-insensitive, remove espaços em branco à esquerda)
+        if not consulta_sql.strip().lower().startswith("select"):
+            st.error("Somente consultas SELECT são permitidas.")
+        else:
+            with engine_protheus.connect() as conn2:
+                df_result = pd.read_sql(text(consulta_sql), conn2)
+            st.dataframe(df_result, use_container_width=True)
+    except Exception as e:
+        st.error(f"Erro na execução: {e}")
         with engine_protheus.connect() as conn2:
             df_result = pd.read_sql(text(consulta_sql), conn2)
         st.dataframe(df_result, use_container_width=True)
