@@ -1,8 +1,11 @@
-"""
-App Streamlit para gerenciar, salvar e executar consultas SQL personalizadas.
-- As consultas são armazenadas no PostgreSQL.
-- A execução das consultas ocorre no banco Protheus (SQL Server).
-"""
+# --------------------------------------
+# App Streamlit para Gerenciar Consultas SQL
+# --------------------------------------
+# - Permite salvar, listar, deletar e executar SELECTs personalizados
+# - Os SELECTs são salvos em um banco PostgreSQL
+# - As consultas são executadas contra um banco SQL Server (Protheus)
+# - Os filtros são definidos dinamicamente com base nas colunas detectadas
+# --------------------------------------
 
 from io import BytesIO
 import pandas as pd
@@ -12,9 +15,8 @@ from dotenv import load_dotenv
 from sqlalchemy.engine.url import URL
 import os
 
-# Carrega variáveis de ambiente do arquivo .env
+# Carrega variáveis de ambiente do .env
 load_dotenv()
-
 
 # -------------------------
 # Conexões com os bancos
@@ -43,16 +45,6 @@ connection_string = (
 )
 engine_protheus = create_engine(URL.create("mssql+pyodbc", query={"odbc_connect": connection_string}))
 
-# Mapeamento lógico de filtros para possíveis colunas físicas na consulta
-MAPEAMENTO_FILTROS = {
-    "produto": ["B1_COD", "D2_COD", "D1_COD", "C7_PRODUTO", "C6_PRODUTO"],
-    "fornecedor": ["A2_COD", "D1_FORNECE", "F1_FORNECE"],
-    "cooperado": ["A1_COD", "F2_CLIENTE", "C5_CLIENTE", "C6_CLI"],
-    "filial": ["D1_FILIAL", "C7_FILIAL", "M0_CODFIL", "C5_FILIAL", "C6_FILIAL"],
-    "data": ["D1_EMISSAO", "D2_EMISSAO", "C7_EMISSAO", "F2_EMISSAO", "F1_EMISSAO", "C5_EMISSAO", "C6_ENTREG"],
-}
-
-
 # -------------------------
 # Utilitários
 # -------------------------
@@ -65,52 +57,8 @@ def validar_sql_base(sql):
         return False
     return True
 
-# Detecta quais filtros podem ser aplicados à consulta com base nas colunas detectadas
-def detectar_filtros(sql_base):
-    if not sql_base.strip():
-        return []
-    try:
-        query = f"SELECT TOP 1 * FROM ({sql_base}) AS sub"
-        with engine_protheus.connect() as conn:
-            df = pd.read_sql(query, conn)
-        colunas = [c.upper() for c in df.columns]
-        filtros = [k for k, v in MAPEAMENTO_FILTROS.items() if any(c in colunas for c in v)]
-        return filtros
-    except Exception as e:
-        st.error(f"Erro ao detectar filtros: {e}")
-        return []
-
-# Monta a cláusula WHERE dinamicamente com base nos filtros detectados
-def montar_where(sql_base, filtros_logicos, valores):
-    with engine_protheus.connect() as conn:
-        df = pd.read_sql(f"SELECT TOP 1 * FROM ({sql_base}) AS sub", conn)
-    colunas_disponiveis = [c.upper() for c in df.columns]
-
-    clausulas, params = [], {}
-    for filtro in filtros_logicos:
-        # Verifica se existe uma coluna física correspondente no resultado da consulta
-        coluna_fisica = next((col for col in MAPEAMENTO_FILTROS[filtro] if col.upper() in colunas_disponiveis), None)
-        if not coluna_fisica:
-            continue
-
-        # Adiciona os filtros ao WHERE com os parâmetros apropriados
-        if filtro == "data":
-            if valores.get("data_de"):
-                clausulas.append(f"{coluna_fisica} >= :data_de")
-                params["data_de"] = valores["data_de"]
-            if valores.get("data_ate"):
-                clausulas.append(f"{coluna_fisica} <= :data_ate")
-                params["data_ate"] = valores["data_ate"]
-        else:
-            valor = valores.get(filtro)
-            if valor:
-                clausulas.append(f"{coluna_fisica} LIKE :{filtro}")
-                params[filtro] = f"%{valor}%"
-    return " AND ".join(clausulas), params
-
-
 # -------------------------
-# Funções CRUD (PostgreSQL)
+# Funções CRUD
 # -------------------------
 
 # Lista de Consultas
@@ -137,7 +85,6 @@ def deletar_consulta(id):
     with engine_postgres.begin() as conn:
         conn.execute(text("DELETE FROM consultas_salvas WHERE id = :id"), {"id": id})
 
-
 # -------------------------
 # Interface Streamlit
 # -------------------------
@@ -147,11 +94,11 @@ st.title("Gerenciador de Consultas SQL")
 consultas = listar_consultas()
 id_selecionado = st.selectbox("Consultas salvas:", options=consultas["id"] if not consultas.empty else [], format_func=lambda x: consultas[consultas["id"] == x]["nome"].values[0])
 
-# Inicializa a session_state se necessário
+
 if "consulta" not in st.session_state:
     st.session_state["consulta"] = ""
 
-# Botões para carregar ou deletar consulta
+# Botões carregar/deletar
 col1, col2 = st.columns(2)
 with col1:
     if st.button("Carregar") and id_selecionado:
@@ -163,28 +110,39 @@ with col2:
         st.success("Consulta deletada.")
         st.rerun()
 
-# Área principal da consulta
+# Editor da consulta
 col_sql, col_filtros = st.columns([3, 1])
 with col_sql:
     consulta_sql = st.text_area("Consulta SQL", height=250, value=st.session_state.get("consulta", ""), key="consulta_sql")
     nome = st.text_input("Nome", key="nome")
     descricao = st.text_area("Descrição", key="descricao")
 
+# Filtros baseados nas colunas da consulta
+filtros_valores = {}
+colunas_disponiveis = []
+
 with col_filtros:
-    filtros_detectados = detectar_filtros(consulta_sql)
-    filtros_valores = {}
-    if filtros_detectados:
-        if "data" in filtros_detectados:
-            filtros_valores["data_de"] = st.date_input("Data de", key="data_de")
-            filtros_valores["data_ate"] = st.date_input("Data até", key="data_ate")
-        for campo in ["fornecedor", "filial", "cooperado", "produto"]:
-            if campo in filtros_detectados:
-                filtros_valores[campo] = st.text_input(campo.capitalize(), key=f"filtro_{campo}")
+    if consulta_sql.strip():
+        try:
+            # Executa a consulta para descobrir as colunas disponíveis
+            with engine_protheus.connect() as conn:
+                df_top1 = pd.read_sql(f"SELECT TOP 1 * FROM ({consulta_sql}) AS base", conn)
+            colunas_disponiveis = df_top1.columns.tolist()
 
-# Botões Salvar e Executar
+            # Seleção de colunas para aplicar filtros
+            colunas_para_filtrar = st.multiselect("Selecionar colunas para filtro:", colunas_disponiveis)
+
+            for col in colunas_para_filtrar:
+                if "data" in col.lower() or "emissao" in col.lower():
+                    filtros_valores[f"{col}_de"] = st.date_input(f"{col} - De:")
+                    filtros_valores[f"{col}_ate"] = st.date_input(f"{col} - Até:")
+                else:
+                    filtros_valores[col] = st.text_input(f"Filtro para {col}:")
+        except Exception as e:
+            st.error(f"Erro ao carregar colunas: {e}")
+
+# Botões salvar e executar
 col_s, col_e = st.columns(2)
-
-# Botão para salvar consulta no PostgreSQL
 with col_s:
     if st.button("Salvar", key="btn_salvar"):
         if not nome.strip() or not consulta_sql.strip():
@@ -194,12 +152,27 @@ with col_s:
             st.success("Consulta salva.")
             st.rerun()
 
-# Botão para executar consulta no Protheus
 with col_e:
     if st.button("Executar", key="btn_exec"):
         if not validar_sql_base(consulta_sql):
             st.stop()
-        where, params = montar_where(consulta_sql, filtros_detectados, filtros_valores)
+
+        # Construção do WHERE com base nos filtros preenchidos
+        clausulas = []
+        params = {}
+        for col in colunas_disponiveis:
+            if f"{col}_de" in filtros_valores:
+                clausulas.append(f"{col} >= :{col}_de")
+                params[f"{col}_de"] = filtros_valores[f"{col}_de"]
+            if f"{col}_ate" in filtros_valores:
+                clausulas.append(f"{col} <= :{col}_ate")
+                params[f"{col}_ate"] = filtros_valores[f"{col}_ate"]
+            elif col in filtros_valores and filtros_valores[col]:
+                clausulas.append(f"{col} LIKE :{col}")
+                params[col] = f"%{filtros_valores[col]}%"
+
+        # Combinação da cláusula WHERE
+        where = " AND ".join(clausulas)
         sql_final = f"SELECT * FROM ({consulta_sql}) AS base WHERE 1=1"
         if where:
             sql_final += f" AND {where}"
@@ -208,7 +181,6 @@ with col_e:
             with engine_protheus.connect() as conn:
                 df_result = pd.read_sql(text(sql_final), conn, params=params)
 
-            # Armazena o resultado para exibir fora da coluna
             st.session_state["df_result"] = df_result
 
         except Exception as e:
@@ -227,3 +199,4 @@ if "df_result" in st.session_state:
 
         st.download_button("📥 Excel", data=excel_stream, file_name="resultado.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         st.download_button("📥 CSV", data=csv_data, file_name="resultado.csv", mime="text/csv")
+
