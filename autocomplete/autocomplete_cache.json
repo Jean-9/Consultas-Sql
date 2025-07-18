@@ -1,0 +1,198 @@
+[
+  {
+    "value": "AND",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "FROM",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "GROUP BY",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "INNER",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "JOIN",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "LEFT",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "NOT",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "OR",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "ORDER BY",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "SELECT",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "WHERE",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "CORRIDA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "DELTA_TEMPO",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "DESEMPENHO_PILOTOS",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "DRIVER_ID",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "EM_PISTA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "ENTRADA_RANK",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "ENTRADA_TEMPO",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "ENTRADA_VOLTA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "EVENTO",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "FABRICANTE",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "IMAGEM_PISTA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "INICIO",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "MELHOR_VOLTA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "NOME_COMPLETO",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "NOME_PISTA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "NUMERO_CARRO",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "NUMERO_VOLTA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "PARADA_ID",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "PILOTO_VOLTA_RAPIDA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "PILOTOS",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "PIT_STOPS",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "POSICAO",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "POSICOES_GANHAS",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "PRIMEIRO_NOME",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "RACE_ID",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "SAIDA_RANK",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "SAIDA_TEMPO",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "STATUS",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "STATUS_CORRIDA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "TEMPO_VOLTA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "TEMPO_VOLTA_RAPIDA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "ULTIMA_VOLTA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "ULTIMO_NOME",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "VELOCIDADE_MEDIA",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "VOLTA_ATUAL",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "VOLTAS_PILOTO",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "VOLTAS_PROCESSADAS",
+    "meta": "autocomplete"
+  },
+  {
+    "value": "VOLTAS_TOTAIS",
+    "meta": "autocomplete"
+  }
+]

@@ -1,0 +1,12 @@
+body {
+  font-family: "Roboto", "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+.ace_editor {
+  text-transform: uppercase;
+  border: none !important;
+  box-shadow: none !important;
+}
+.ace_editor {
+  text-transform: uppercase;
+}
